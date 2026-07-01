@@ -1,78 +1,319 @@
-body {
-  background-color: white;
-  display: flex;
-  text-align: center;
+/* =========================
+   Global
+========================= */
+
+* {
+  box-sizing: border-box;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 40px 20px;
+  background: #f5f7fa;
+  color: #1f2937;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+/* =========================
+   Main Container
+========================= */
 
 .container {
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
-  font-family: Arial, sans-serif;
-  padding: 20px;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  padding: 48px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
-.container img {
-  border-radius: 8px;
-}
+/* =========================
+   Typography
+========================= */
 
-.container p,
-ul,
+h1,
+h2,
 h3,
 h4 {
+  color: #111827;
+  line-height: 1.25;
+  margin-top: 2rem;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+}
+
+h3 {
+  font-size: 1.35rem;
+}
+
+p,
+ul,
+ol,
+blockquote,
+table {
+  margin: 1.25rem 0;
+}
+
+p,
+ul,
+ol,
+li,
+blockquote,
+table {
   text-align: left;
 }
 
-.container pre code {
-  max-width: 800px;
-  text-align: left;
+a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* =========================
+   Images
+========================= */
+
+.container img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.container > article img {
   display: block;
-  background-color: rgb(235, 235, 235);
+  margin: 2rem 0;
+}
+
+/* =========================
+   Inline Code
+========================= */
+
+code {
+  font-family:
+    "JetBrains Mono",
+    "Fira Code",
+    Consolas,
+    monospace;
+}
+
+p code,
+li code {
+  background: #eef2ff;
+  color: #1d4ed8;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.92em;
+}
+
+/* =========================
+   Code Blocks
+========================= */
+
+pre {
   overflow-x: auto;
-  padding: 15px;
-  border-radius: 8px;
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 2rem 0;
 }
 
-.container blockquote {
-  text-align: left;
-  background-color: rgb(214, 214, 0);
-  padding: 15px;
-  border-radius: 8px;
+pre code {
+  display: block;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.92rem;
 }
 
-.container p code,
-ul li code {
-  color: red;
+/* =========================
+   Blockquotes
+========================= */
+
+blockquote {
+  margin: 2rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 5px solid #2563eb;
+  background: #eff6ff;
+  color: #374151;
+  font-style: italic;
 }
+
+/* =========================
+   Tables
+========================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.8rem;
+  border: 1px solid #e5e7eb;
+}
+
+th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* =========================
+   Blog Listing
+========================= */
 
 .blog-box {
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid white;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+  margin: 2rem 0;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.blog-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
 .blog-content {
   display: flex;
   flex-direction: row-reverse;
+  align-items: center;
+  gap: 24px;
 }
 
 .blog-content img {
-  width: 150px;
-  height: auto;
-  border-radius: 8px;
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
 .text {
   flex: 1;
-  padding-left: 15px;
+  min-width: 0;
   text-align: left;
 }
 
 .text h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.text p {
+  color: #4b5563;
+}
+
+/* =========================
+   Navigation
+========================= */
+
+.blog-nav {
+  margin-bottom: 2rem;
   text-align: left;
+}
+
+.blog-nav a {
+  color: #6b7280;
+}
+
+.blog-nav a:hover {
+  color: #2563eb;
+}
+
+/* =========================
+   Homepage
+========================= */
+
+.site-tagline {
+  font-size: 1.1rem;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.blog-date {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+/* =========================
+   Pagination
+========================= */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.pagination a {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+}
+
+.pagination a:hover {
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+}
+
+.pagination-current {
+  font-weight: 700;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  .container {
+    padding: 28px;
+  }
+
+  .blog-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .blog-content img {
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
 }

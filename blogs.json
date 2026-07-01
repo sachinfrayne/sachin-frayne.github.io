@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Elasticsearch Murmur3 Shard Routing",
+    "date": "2026-06-25",
+    "url": "blogs/elasticsearch-murmur3-shard-routing.html",
+    "excerpt": "Elasticsearch's routing formula uses MurmurHash3, but the docs never say so.",
+    "image": "images/tiny/elasticsearch-murmur3-shard-routing.jpg",
+    "imageAlt": "Elasticsearch Murmur3 Shard Routing"
+  },
+  {
+    "title": "Elasticsearch Explain API",
+    "date": "2023-06-09",
+    "url": "blogs/elasticsearch-explain-api.html",
+    "excerpt": "Do you want to understand why your documents got those scores?",
+    "image": "images/tiny/elasticsearch-explain-api.jpg",
+    "imageAlt": "Elasticsearch Explain API"
+  },
+  {
+    "title": "Elasticsearch Binary Data Type",
+    "date": "2023-06-09",
+    "url": "blogs/elasticsearch-binary-data-type.html",
+    "excerpt": "What is the binary data type even for?",
+    "image": "images/tiny/elasticsearch-binary-data-type.jpg",
+    "imageAlt": "Elasticsearch Binary Data Type"
+  }
+]

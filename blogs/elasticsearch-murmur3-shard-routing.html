@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elasticsearch Murmur3 Shard Routing</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <nav class="blog-nav"><a href="../index.html">← Home</a></nav>
+      <article>
+        <h1>Elasticsearch Murmur3 Shard Routing</h1>
+        <p class="blog-date">
+          <time datetime="2026-06-25">25 June 2026</time>
+        </p>
+        <p>
+          Elasticsearch's routing formula uses MurmurHash3, but the docs never say so.
+          This post names the function, walks through the full shard calculation, and
+          shows you how to reproduce it externally.
+        </p>
+        <img
+          src="../images/elasticsearch-murmur3-shard-routing.jpg"
+          alt="Elasticsearch Murmur3 Shard Routing"
+        />
+        <p>
+          When I first started working with
+          <a href="https://www.elastic.co/elasticsearch">Elasticsearch</a>, I knew that
+          documents were distributed across shards and I knew there was some kind of hash
+          involved. The
+          <a
+            href="https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-routing-field"
+            >documentation</a
+          >
+          even shows you the formula:
+        </p>
+        <pre><code>routing_factor = num_routing_shards / num_primary_shards
+shard_num      = (hash(_routing) % num_routing_shards) / routing_factor</code></pre>
+        <p>
+          But that <code>hash()</code> call? Completely opaque. Click through to the routing
+          field documentation, and you won't find the name of the function. Ask around, and
+          you get told it's an implementation detail, deliberately abstracted so the team can
+          swap it out without updating docs.
+        </p>
+        <p>
+          That answer is technically defensible. It didn't help me or my customers understand
+          uneven document distribution.
+        </p>
+        <p>This post is the explanation I wish I'd found.</p>
+
+        <h2>What is MurmurHash3, and why does Elasticsearch use it?</h2>
+        <p>
+          The function behind <code>hash()</code> is <strong>MurmurHash3</strong>. It's a
+          non-cryptographic hash function designed by Austin Appleby in 2008. Unlike
+          cryptographic hash functions (SHA-256, MD5), it isn't built for security; it doesn't
+          need to be irreversible or resistant to deliberate collision attacks. It's built for
+          one thing: spreading input values as evenly as possible across an output space,
+          fast.
+        </p>
+        <p>
+          That makes it a good fit for shard routing. Elasticsearch needs to take a document
+          ID, produce a number, and use that number to decide which shard the document lives
+          on. The requirements are exactly what Murmur3 delivers:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Why it matters for shard routing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Uniform distribution</td>
+              <td>Documents spread evenly across shards without manual intervention.</td>
+            </tr>
+            <tr>
+              <td>Determinism</td>
+              <td>The same document ID always routes to the same shard.</td>
+            </tr>
+            <tr>
+              <td>Speed</td>
+              <td>Runs on every index and get operation (latency cost must be negligible).</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          A
+          <a href="https://en.wikipedia.org/wiki/MurmurHash">brief overview of the algorithm is on Wikipedia</a>,
+          if you want to go deeper. The short version: Murmur3 operates on blocks of bytes,
+          mixing in a series of multiply-rotate-XOR steps to produce
+          <em>avalanche effects</em> (small input changes cause large, unpredictable output
+          changes). The result is a 32-bit or 128-bit integer. Elasticsearch uses the 32-bit
+          variant.
+        </p>
+
+        <h2>How Elasticsearch calculates shard numbers: A worked example</h2>
+        <p>
+          For a six-shard index, Elasticsearch uses 768 routing shards and a routing factor of
+          128. Here's how to verify that with a real document.
+        </p>
+        <p>Create an index with six primary shards:</p>
+        <pre><code>PUT test
+{
+  &quot;settings&quot;: {&quot;number_of_shards&quot;: 6}
+}</code></pre>
+        <p>
+          Check the default settings, paying attention to
+          <code>index.number_of_routing_shards</code>:
+        </p>
+        <pre><code>GET test?include_defaults&amp;flat_settings</code></pre>
+        <p>
+          With six primary shards, the response will show
+          <code>index.number_of_routing_shards = 768</code>. The docs describe this setting as:
+        </p>
+        <p>
+          <em>The default is designed to allow you to split by factors of 2 up to a maximum of 1024 shards.</em>
+        </p>
+        <p>
+          What it means in practice: Elasticsearch starts with your primary shard count and
+          keeps doubling it until doubling again would exceed 1024. For six primary shards:
+        </p>
+        <pre><code>6 × 1   = 6
+6 × 2   = 12
+6 × 4   = 24
+6 × 8   = 48
+6 × 16  = 96
+6 × 32  = 192
+6 × 64  = 384
+6 × 128 = 768
+6 × 256 = 1536  → too high</code></pre>
+        <p>
+          This gives you enough routing space to double the index's primary shard count up to
+          seven times without reindexing.
+        </p>
+        <p>For our index:</p>
+        <pre><code>num_primary_shards = 6
+num_routing_shards = 768
+routing_factor     = 768 / 6 = 128</code></pre>
+        <p>Now index a document:</p>
+        <pre><code>PUT test/_doc/654321
+{
+  &quot;field&quot;: &quot;value&quot;
+}</code></pre>
+        <p>Check which shard it landed on:</p>
+        <pre><code>GET _cat/shards/test?v</code></pre>
+        <p>It ends up on shard 4. Let's verify why.</p>
+
+        <h2>Computing the MurmurHash3 shard routing formula step by step</h2>
+        <p>
+          Using the values established above (<code>num_routing_shards = 768</code>,
+          <code>routing_factor = 128</code>, document ID <code>654321</code>), the shard
+          calculation is:
+        </p>
+        <pre><code>shard_num = Math.floorMod(hash(&quot;654321&quot;), 768) / 128</code></pre>
+        <p>
+          At this point, we finally need to answer the question that the docs leave open: What
+          is <code>hash()</code>? In Elasticsearch, it's MurmurHash3. For the string
+          <code>&quot;654321&quot;</code>, it returns <code>1424940152</code>.
+        </p>
+        <pre><code>Math.floorMod(1424940152, 768) = 632
+632 / 128                      = 4</code></pre>
+        <p>Shard 4, exactly where Elasticsearch put it.</p>
+        <p>
+          If you want to verify this with your own IDs, here's a small Java script that
+          computes the same shard number externally. Index a document into Elasticsearch,
+          check which shard it lands on, and then run the same ID through this script and
+          confirm the result matches.
+        </p>
+        <p>Save this as <code>Murmur3Demo.java</code>:</p>
+        <pre><code>class Murmur3Demo {
+
+    // MurmurHash3 x86_32 — a fast non-cryptographic hash by Austin Appleby.
+    // These two constants were chosen empirically for their avalanche (bit-mixing) properties.
+    static final int C1 = 0xcc9e2d51;
+    static final int C2 = 0x1b873593;
+
+    static int murmurhash3(byte[] data, int seed) {
+        int len = data.length;
+        int h   = seed;
+
+        // Mix in 4 bytes at a time (little-endian 32-bit words)
+        int blocks = len / 4;
+        for (int i = 0; i &lt; blocks; i++) {
+            int k = (data[i*4  ] &amp; 0xFF)
+                  | (data[i*4+1] &amp; 0xFF) &lt;&lt;  8
+                  | (data[i*4+2] &amp; 0xFF) &lt;&lt; 16
+                  | (data[i*4+3] &amp; 0xFF) &lt;&lt; 24;
+
+            k *= C1;
+            k  = Integer.rotateLeft(k, 15);
+            k *= C2;
+
+            h ^= k;
+            h  = Integer.rotateLeft(h, 13);
+            h  = h * 5 + 0xe6546b64;
+        }
+
+        // Mix in any leftover 1–3 bytes
+        int t = blocks * 4;
+        int k = 0;
+        if ((len &amp; 3) == 3) k  = (data[t+2] &amp; 0xFF) &lt;&lt; 16;
+        if ((len &amp; 3) &gt;= 2) k |= (data[t+1] &amp; 0xFF) &lt;&lt;  8;
+        if ((len &amp; 3) &gt;= 1) {
+            k |= (data[t] &amp; 0xFF);
+            k *= C1;
+            k  = Integer.rotateLeft(k, 15);
+            k *= C2;
+            h ^= k;
+        }
+
+        // fmix32: force all bits to fully avalanche before returning
+        h ^= len;
+        h ^= h &gt;&gt;&gt; 16;  h *= 0x85ebca6b;
+        h ^= h &gt;&gt;&gt; 13;  h *= 0xc2b2ae35;
+        h ^= h &gt;&gt;&gt; 16;
+
+        return h;
+    }
+
+    public static void main(String[] args) {
+        String id = args[0];
+        int n     = Integer.parseInt(args[1]);
+
+        // Elasticsearch encodes strings as UTF-16LE (2 bytes per char, low byte first)
+        byte[] bytes = new byte[id.length() * 2];
+        for (int i = 0; i &lt; id.length(); i++) {
+            char c       = id.charAt(i);
+            bytes[i*2  ] = (byte)  c;
+            bytes[i*2+1] = (byte) (c &gt;&gt;&gt; 8);
+        }
+
+        // To avoid modulo bias, Elasticsearch rounds n up to the next power-of-2 (r),
+        // takes floorMod(hash, r), then scales back down with / (r/n).
+        int r = n;
+        while (r * 2 &lt;= 1024) r *= 2;
+
+        System.out.println(Math.floorMod(murmurhash3(bytes, 0), r) / (r / n));
+    }
+}</code></pre>
+        <p>To run it:</p>
+        <pre><code>java Murmur3Demo.java 654321 6</code></pre>
+        <p>This prints:</p>
+        <pre><code>4</code></pre>
+        <p>Which matches the shard assignment above.</p>
+        <p>
+          If your index was created with an explicit
+          <code>index.number_of_routing_shards</code>, use that value directly instead of
+          deriving it from <code>number_of_shards</code>.
+        </p>
+
+        <h2>The Elasticsearch source code: How hash() encodes routing values</h2>
+        <p>
+          The Elasticsearch
+          <a
+            href="https://github.com/elastic/elasticsearch/blob/main/server/src/main/java/org/elasticsearch/cluster/routing/Murmur3HashFunction.java#L27"
+            >source</a
+          >
+          encodes the routing value as UTF-16LE before passing it to MurmurHash3. Here's the
+          relevant method:
+        </p>
+        <pre><code>public static int hash(String routing) {
+    assert assertHashWithoutInformationLoss(routing);
+    final int strLen = routing.length();
+    final byte[] bytesToHash = strLen * 2 &lt;= MAX_SCRATCH_SIZE
+        ? scratch.get()
+        : new byte[strLen * 2];
+    for (int i = 0; i &lt; strLen; ++i) {
+        ByteUtils.LITTLE_ENDIAN_CHAR.set(bytesToHash, 2 * i, routing.charAt(i));
+    }
+    return hash(bytesToHash, 0, strLen * 2);
+}</code></pre>
+        <p>Two things worth noting here:</p>
+        <p>
+          First, the routing value is a string, and each character is written as a
+          little-endian two-byte sequence before hashing. This is why you cannot reproduce
+          the hash by treating the ID as ASCII: <code>&quot;654321&quot;</code> is encoded as
+          12 bytes, not 6.
+        </p>
+        <p>
+          Second, the function returns a signed 32-bit integer, but Elasticsearch takes
+          <code>Math.floorMod</code> of the result to avoid negative shard numbers. If you're
+          trying to reproduce the routing calculation in another language, watch out for
+          signed/unsigned integer differences.
+        </p>
+
+        <h2>When MurmurHash3 routing causes hot shards and how to check</h2>
+        <p>
+          For most workloads, you never need to think about this. Index documents with
+          auto-generated IDs, and Murmur3's uniform distribution will spread them evenly
+          across shards. Where it causes issues is with custom IDs or routing values with
+          poor effective distribution. Sequential integers, timestamp-derived values, or
+          heavily patterned identifiers aren't guaranteed to cause skew, but they're worth
+          checking if you're seeing hot shards. The hash function itself is not at fault:
+          Murmur3 is designed to distribute inputs evenly. But if shard distribution looks
+          wrong, your choice of IDs or routing values is one of the first things to test.
+        </p>
+        <p>
+          If you're seeing hot shards and your documents have custom IDs, do the same
+          calculation we just did for <code>&quot;654321&quot;</code> on a sample of your real
+          IDs. Hash each ID with Murmur3, apply
+          <code>Math.floorMod(..., num_routing_shards)</code>, divide by the routing factor,
+          and see how many land on each shard.
+        </p>
+
+        <h2>Why Elasticsearch doesn't document the hash function name</h2>
+        <p>
+          Hiding implementation details behind a stable interface is good software design. The
+          routing formula is documented and guaranteed. The specific hash function underneath
+          it is not, because it doesn't need to be; for almost every use case, all that
+          matters is that documents are distributed evenly and consistently, which Murmur3
+          delivers regardless of whether you know its name.
+        </p>
+        <p>
+          The exception is when things go wrong. If documents are clustered on the same shards
+          and you don't know how routing works, you have nowhere to start debugging. Once you
+          know the formula and the function, the path from <em>Why are these shards hot?</em>
+          to a concrete answer is a few lines of arithmetic.
+        </p>
+        <p>For most users, that's when knowing it's Murmur3 matters. And now you know.</p>
+        <p>
+          <em
+            >Originally published on
+            <a
+              href="https://www.elastic.co/search-labs/blog/murmur3-elasticsearch-shard-routing"
+              >Elasticsearch Labs</a
+            >.</em
+          >
+        </p>
+      </article>
+    </div>
+  </body>
+</html>

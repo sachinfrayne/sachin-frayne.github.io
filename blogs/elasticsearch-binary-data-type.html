@@ -8,13 +8,18 @@
   </head>
   <body>
     <div class="container">
+      <nav class="blog-nav"><a href="../index.html">← Home</a></nav>
+      <article>
       <h1>Elasticsearch Binary Data Type</h1>
+      <p class="blog-date">
+        <time datetime="2023-06-09">9 June 2023</time>
+      </p>
       <h2 id="can-store-any-base64-encoded-string-must-not-contain-n.">
         Can store any Base64 encoded string, must not contain <code>\n</code>.
       </h2>
       <img
         src="../images/elasticsearch-binary-data-type.jpg"
-        alt="Elasticsearch Explain API"
+        alt="Elasticsearch Binary Data Type"
       />
       <p>
         The
@@ -29,7 +34,7 @@
         >
         if you switch off the
         <a
-          href="https://www.elastic.co/guide/en/elasticsearch/reference/current/documents-indices.html"
+          href="https://www.elastic.co/guide/en/elasticsearch/reference/current/index-options.html"
           ><code>inverted index</code></a
         >
         and the
@@ -38,22 +43,16 @@
           ><code>doc_values</code></a
         >, so then what is its purpose?
       </p>
-      <pre><code>PUT index
+      <pre><code>PUT /my_index
 {
   &quot;mappings&quot;: {
     &quot;properties&quot;: {
-      &quot;binary&quot;: {
+      &quot;payload&quot;: {
         &quot;type&quot;: &quot;binary&quot;
       }
     }
   }
 }</code></pre>
-      <p>
-        The <code>binary</code> field type is the same as the
-        <code>keyword</code> field type if you switch off the
-        <code>inverted-index</code> and the <code>doc_values</code>, so then
-        what is its purpose?
-      </p>
       <p>
         A typical use case for Elasticsearch is as a Metadata Search Engine,
         with at least one of the fields in a document pointing to an object in
@@ -90,6 +89,7 @@
         define and it depends on the use case, as a rule of thumb if the file is
         changed 100s of times a day/week/month it is probably one to avoid).
       </p>
+      </article>
     </div>
   </body>
 </html>

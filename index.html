@@ -8,43 +8,65 @@
   </head>
   <body>
     <div class="container">
-      <h1>Hello! I am Sachin.</h1>
+      <h1>Hi, I'm Sachin.</h1>
+      <p class="site-tagline">I am a Search Engineer passionate about understanding how large scale search systems work. Over the last 10+ years I've worked extensively with Elasticsearch, distributed systems, benchmarking, and information retrieval. I use this site to document what I learn, publish in depth technical articles, and share experiments that I hope are useful to other engineers. If you're interested in search, vector databases, retrieval systems, or distributed infrastructure, you'll probably find something here.</p>
       <div class="blog-list">
-        <div class="blog-box">
+        <article class="blog-box">
           <div class="blog-content">
             <div class="text">
               <h2>
-                <a href="blogs/elasticsearch-explain-api.html"
-                  >Elasticsearch Explain API</a
-                >
+                <a href="blogs/elasticsearch-murmur3-shard-routing.html">Elasticsearch Murmur3 Shard Routing</a>
               </h2>
-              <p>
-                Do you want to understand why your documents got those scores?
+              <p class="blog-date">
+                <time datetime="2026-06-25">25 June 2026</time>
               </p>
+              <p>Elasticsearch's routing formula uses MurmurHash3, but the docs never say so.</p>
+            </div>
+            <img
+              src="images/tiny/elasticsearch-murmur3-shard-routing.jpg"
+              alt="Elasticsearch Murmur3 Shard Routing"
+            />
+          </div>
+        </article>
+
+
+        <article class="blog-box">
+          <div class="blog-content">
+            <div class="text">
+              <h2>
+                <a href="blogs/elasticsearch-binary-data-type.html">Elasticsearch Binary Data Type</a>
+              </h2>
+              <p class="blog-date">
+                <time datetime="2023-06-09">9 June 2023</time>
+              </p>
+              <p>What is the binary data type even for?</p>
+            </div>
+            <img
+              src="images/tiny/elasticsearch-binary-data-type.jpg"
+              alt="Elasticsearch Binary Data Type"
+            />
+          </div>
+        </article>
+
+
+        <article class="blog-box">
+          <div class="blog-content">
+            <div class="text">
+              <h2>
+                <a href="blogs/elasticsearch-explain-api.html">Elasticsearch Explain API</a>
+              </h2>
+              <p class="blog-date">
+                <time datetime="2023-06-09">9 June 2023</time>
+              </p>
+              <p>Do you want to understand why your documents got those scores?</p>
             </div>
             <img
               src="images/tiny/elasticsearch-explain-api.jpg"
               alt="Elasticsearch Explain API"
             />
           </div>
-        </div>
+        </article>
 
-        <div class="blog-box">
-          <div class="blog-content">
-            <div class="text">
-              <h2>
-                <a href="blogs/elasticsearch-binary-data-type.html"
-                  >Elasticsearch Binary Data Type</a
-                >
-              </h2>
-              <p>What is the binary data type even for?</p>
-            </div>
-            <img
-              src="images/tiny/elasticsearch-binary-data-type.jpg"
-              alt="Scaling Elasticsearch Clusters"
-            />
-          </div>
-        </div>
       </div>
     </div>
   </body>
