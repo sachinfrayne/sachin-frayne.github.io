@@ -1,17 +1,12 @@
-        <article class="blog-box">
-          <div class="blog-content">
-            <div class="text">
-              <h2>
-                <a href="{{URL}}">{{TITLE}}</a>
-              </h2>
-              <p class="blog-date">
-                <time datetime="{{DATE}}">{{DATE_DISPLAY}}</time>
-              </p>
-              <p>{{EXCERPT}}</p>
-            </div>
-            <img
-              src="{{IMAGE}}"
-              alt="{{IMAGE_ALT}}"
-            />
+        <article class="post-card">
+{{IMAGE_BLOCK}}
+          <div class="post-card-body">
+            <p class="post-meta">
+              <time datetime="{{DATE}}">{{DATE_DISPLAY}}</time>
+            </p>
+            <h3 class="post-card-title">
+              <a href="{{URL}}">{{TITLE}}</a>
+            </h3>
+            <p class="post-card-excerpt">{{EXCERPT}}</p>
           </div>
         </article>

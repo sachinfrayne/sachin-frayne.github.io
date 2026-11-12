@@ -1,5 +1,25 @@
 {
   "title": "Sachin Frayne",
   "heading": "Hi, I'm Sachin.",
-  "tagline": "I am a Search Engineer passionate about understanding how large scale search systems work. Over the last 10+ years I've worked extensively with Elasticsearch, distributed systems, benchmarking, and information retrieval. I use this site to document what I learn, publish in depth technical articles, and share experiments that I hope are useful to other engineers. If you're interested in search, vector databases, retrieval systems, or distributed infrastructure, you'll probably find something here."
+  "role": "Search Engineer",
+  "tagline": "I'm a search engineer who likes to understand how things work under the hood, from search engine internals to the Qdrant storage engine and the Rust code behind it.",
+  "about": [
+    "I have spent over 10 years working on search and information retrieval, with a lot of hands-on time in distributed systems, benchmarking, and search engine internals. Along the way I have learned that the hard problems are rarely the ones in the documentation. They are the problem a user describes, the default nobody questions, and the internals nobody explains.",
+    "I now work on vector search at Qdrant, where I am digging into how the storage engine works, from collections and segments to the Rust code that runs it. A big part of my job is helping people turn the problem they describe into the problem they actually have. This site is where I write down what I learn, usually as long form explanations that I wish I had found when I started."
+  ],
+  "topics": [
+    "Vector search",
+    "Qdrant internals",
+    "Rust",
+    "Distributed systems",
+    "Benchmarking",
+    "Helping users solve real problems",
+    "Learning in public"
+  ],
+  "links": [
+    {
+      "label": "GitHub",
+      "url": "https://github.com/sachinfrayne"
+    }
+  ]
 }

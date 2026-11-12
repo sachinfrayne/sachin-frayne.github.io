@@ -3,16 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="{{DESCRIPTION}}" />
     <title>{{PAGE_TITLE}}</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="container">
-      <h1>{{HEADING}}</h1>
-      <p class="site-tagline">{{TAGLINE}}</p>
-      <div class="blog-list">
+    <header class="site-header">
+      <div class="container site-header-inner">
+        <a class="site-name" href="index.html">{{TITLE}}</a>
+        <a href="#writing">Writing</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <p class="eyebrow">{{ROLE}}</p>
+        <h1>{{HEADING}}</h1>
+        <p class="lead">{{TAGLINE}}</p>
+        <div class="about">
+{{ABOUT}}
+        </div>
+        <ul class="topics" aria-label="Topics I write about">
+{{TOPICS}}
+        </ul>
+        <nav class="elsewhere" aria-label="Elsewhere">
+{{LINKS}}
+        </nav>
+      </section>
+
+      <section class="posts" id="writing">
+        <h2>Writing</h2>
+        <div class="post-grid">
 {{BLOG_LIST}}
-      </div>{{PAGINATION}}
-    </div>
+        </div>{{PAGINATION}}
+      </section>
+    </main>
   </body>
 </html>

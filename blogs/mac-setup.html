@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="How I keep a Mac development environment reproducible with one repo: one command, one package list, and a verify step that catches drift." />
+    <title>One Command for a New Mac | Sachin Frayne</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <main class="post">
+      <article>
+        <header class="post-header">
+          <p class="post-meta">
+            <time datetime="2026-11-12">12 November 2026</time>
+          </p>
+          <h1>One Command for a New Mac</h1>
+          <p class="post-lede">Every few years I set up a new Mac, and every time I lose an afternoon remembering what I had. So I wrote a repo that remembers for me.</p>
+        </header>
+
+        <div class="post-body">
+          <p>
+            The problem is simple to describe. A development machine accumulates tools: a CLI here, an editor extension there, a shell alias you added at midnight and never wrote down. When the laptop changes, those tools don't come with it, and you rebuild them from memory.
+          </p>
+          <p>
+            <a href="https://github.com/sachinfrayne">mac-setup</a> is my answer. It is a repo that installs the tools I use daily, configures my shell and editors, and checks that everything is still there. The whole thing starts with one command:
+          </p>
+          <pre><code>git clone https://github.com/sachinfrayne/mac-setup.git ~/Source/mac-setup
+cd ~/Source/mac-setup
+./setup.sh</code></pre>
+          <p>
+            It is safe to run more than once, which matters more than it sounds. The script checks what is already installed before it changes anything, so the same command works on a fresh machine and on the one I use every day.
+          </p>
+
+          <h2>One list, two jobs</h2>
+          <p>
+            The most useful decision in the repo is that the package list lives in exactly one file, <code>lib/packages.sh</code>. It has about 57 entries: Homebrew formulae like <code>kubectl</code>, <code>helm</code>, and <code>ripgrep</code>, and casks like Visual Studio Code, iTerm2, and Podman Desktop. Each entry has a short description, so the list doubles as documentation.
+          </p>
+          <p>
+            Two scripts read that file. <code>setup.sh</code> installs everything in it, and <code>scripts/verify.sh</code> checks that each item is present. Because both read the same list, they cannot drift apart. If I add a tool to the list, the next verify run notices it is missing from the machine. If I delete a tool from the list, verify stops asking about it.
+          </p>
+          <p>
+            This is the part I would copy into any team setup. Installation and verification usually live in two places, and the second one quietly goes stale. Sharing one source of truth removes that failure mode.
+          </p>
+
+          <h2>Commands you can read</h2>
+          <p>
+            The repo also gives me a few flags that I use more than I expected:
+          </p>
+          <ul>
+            <li><code>mac --dry-run</code> shows what would be installed, without changing anything.</li>
+            <li><code>mac --verify</code> checks the machine against the list.</li>
+            <li><code>mac --upgrade</code> updates Homebrew packages and exits.</li>
+            <li><code>mac --lint</code> runs shellcheck on every shell script in the repo.</li>
+          </ul>
+          <p>
+            The shell side follows the same idea. My aliases and functions are defined in one file, and each one has a <code>:desc</code> line that explains what it does. That line is what makes the alias list readable later. When I forget what <code>podman_clean</code> does, the description says it removes all containers and prunes networks and volumes, after asking for confirmation.
+          </p>
+
+          <h2>Setup as a record</h2>
+          <p>
+            A repo like this also works as a diary. The commit history shows when I added Podman, when I dropped JetBrains and Gradle, and when I swapped the Excel viewer in VS Code. The history answers questions I used to answer from memory, like "why is this on my machine?"
+          </p>
+          <p>
+            It also covers the parts of my workflow that are not packages. The repo keeps my global Claude Code instructions and a status line that shows the current directory and git branch. Those files live with the rest of the setup, so a new machine gets the same working habits as the old one.
+          </p>
+
+          <h2>What I would do differently</h2>
+          <p>
+            The README still contains a placeholder clone URL, so anyone following it today would clone the wrong repository. The first thing I would fix is that link. I would also add a short note on the expected output of <code>--verify</code>, so a new reader knows what a healthy machine looks like.
+          </p>
+          <p>
+            The setup is for my machine, not a general tool. It assumes Homebrew, a specific set of editors, and my own folder layout. That is fine, because the value is in the pattern, not in the list.
+          </p>
+
+          <h2>Start with your own list</h2>
+          <p>
+            You do not need my packages. Start a repo with a list of what you use, one file that both installs and checks it, and a short note about the commands you run most. Put it under version control and write a line each time you change it. The next time you buy a laptop, the setup takes minutes instead of an afternoon.
+          </p>
+        </div>
+      </article>
+
+      <p class="post-footer-link"><a href="../index.html#writing">&larr; Back to all posts</a></p>
+    </main>
+  </body>
+</html>

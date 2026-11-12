@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import shutil
 import subprocess
@@ -87,17 +88,41 @@ def format_date(iso_date: str) -> str:
 
 
 def render_blog_box(blog: dict) -> str:
+    image_block = ""
+    if blog.get("image"):
+        image_block = (
+            f'          <a href="{html.escape(blog["url"])}">'
+            f'<img src="{html.escape(blog["image"])}" '
+            f'alt="{html.escape(blog.get("imageAlt", ""))}" loading="lazy" /></a>'
+        )
+
     return render_template(
         "blog-box.html",
         {
-            "URL": blog["url"],
-            "TITLE": blog["title"],
+            "IMAGE_BLOCK": image_block,
+            "URL": html.escape(blog["url"]),
+            "TITLE": html.escape(blog["title"]),
             "DATE": blog["date"],
             "DATE_DISPLAY": format_date(blog["date"]),
-            "EXCERPT": blog["excerpt"],
-            "IMAGE": blog["image"],
-            "IMAGE_ALT": blog["imageAlt"],
+            "EXCERPT": html.escape(blog["excerpt"]),
         },
+    )
+
+
+def render_about(site: dict) -> str:
+    return "\n".join(f"          <p>{html.escape(p)}</p>" for p in site.get("about", []))
+
+
+def render_topics(site: dict) -> str:
+    return "\n".join(
+        f"          <li>{html.escape(topic)}</li>" for topic in site.get("topics", [])
+    )
+
+
+def render_links(site: dict) -> str:
+    return "\n".join(
+        f'          <a href="{html.escape(link["url"])}">{html.escape(link["label"])}</a>'
+        for link in site.get("links", [])
     )
 
 
@@ -122,16 +147,30 @@ def render_pagination(current_page: int, total_pages: int) -> str:
 def render_index_page(
     blogs: list[dict], current_page: int, total_pages: int, site: dict
 ) -> str:
-    blog_boxes = "\n\n".join(render_blog_box(b) for b in blogs)
+    if blogs:
+        blog_boxes = "\n\n".join(render_blog_box(b) for b in blogs)
+    else:
+        blog_boxes = '          <p class="empty">No posts yet. The first one is on its way.</p>'
+
     pagination = render_pagination(current_page, total_pages)
-    page_title = site["title"] if current_page == 1 else f"{site['title']} — Page {current_page}"
+    page_title = (
+        site["title"]
+        if current_page == 1
+        else f"{site['title']} | Page {current_page}"
+    )
 
     return render_template(
         "index.html",
         {
-            "PAGE_TITLE": page_title,
-            "HEADING": site["heading"],
-            "TAGLINE": site["tagline"],
+            "PAGE_TITLE": html.escape(page_title),
+            "TITLE": html.escape(site["title"]),
+            "DESCRIPTION": html.escape(site["tagline"], quote=True),
+            "ROLE": html.escape(site.get("role", "")),
+            "HEADING": html.escape(site["heading"]),
+            "TAGLINE": html.escape(site["tagline"]),
+            "ABOUT": render_about(site),
+            "TOPICS": render_topics(site),
+            "LINKS": render_links(site),
             "BLOG_LIST": blog_boxes,
             "PAGINATION": pagination,
         },
@@ -143,7 +182,7 @@ def load_blogs() -> list[dict]:
         blogs = json.load(f)
 
     for blog in blogs:
-        for key in ("title", "date", "url", "excerpt", "image", "imageAlt"):
+        for key in ("title", "date", "url", "excerpt"):
             if key not in blog:
                 raise ValueError(f"Blog entry missing '{key}': {blog}")
 
@@ -164,10 +203,10 @@ def main() -> None:
         start = (page_num - 1) * BLOGS_PER_PAGE
         end = start + BLOGS_PER_PAGE
         page_blogs = blogs[start:end]
-        html = render_index_page(page_blogs, page_num, total_pages, site)
+        html_out = render_index_page(page_blogs, page_num, total_pages, site)
 
         out_path = ROOT / ("index.html" if page_num == 1 else f"page-{page_num}.html")
-        out_path.write_text(html, encoding="utf-8", newline="\n")
+        out_path.write_text(html_out, encoding="utf-8", newline="\n")
         print(f"Wrote {out_path.relative_to(ROOT)} ({len(page_blogs)} posts)")
 
 

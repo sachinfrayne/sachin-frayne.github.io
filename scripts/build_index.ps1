@@ -68,6 +68,10 @@ function Render-Template([string]$Name, [hashtable]$Vars) {
     return $content
 }
 
+function HtmlEncode([string]$Text) {
+    return [System.Net.WebUtility]::HtmlEncode($Text)
+}
+
 function FormatBlogDate([string]$IsoDate) {
     $dt = [datetime]::ParseExact($IsoDate, "yyyy-MM-dd", $null)
     return "$($dt.Day) $($dt.ToString("MMMM")) $($dt.Year)"
@@ -75,14 +79,17 @@ function FormatBlogDate([string]$IsoDate) {
 
 function RenderBlogBox($Blog) {
     $displayDate = FormatBlogDate $Blog.date
+    $imageBlock = ""
+    if ($Blog.image) {
+        $imageBlock = "          <a href=`"$(HtmlEncode $Blog.url)`"><img src=`"$(HtmlEncode $Blog.image)`" alt=`"$(HtmlEncode $Blog.imageAlt)`" loading=`"lazy`" /></a>"
+    }
     return Render-Template "blog-box.html" @{
-        URL          = $Blog.url
-        TITLE        = $Blog.title
+        IMAGE_BLOCK  = $imageBlock
+        URL          = HtmlEncode $Blog.url
+        TITLE        = HtmlEncode $Blog.title
         DATE         = $Blog.date
         DATE_DISPLAY = $displayDate
-        EXCERPT      = $Blog.excerpt
-        IMAGE        = $Blog.image
-        IMAGE_ALT    = $Blog.imageAlt
+        EXCERPT      = HtmlEncode $Blog.excerpt
     }
 }
 
@@ -108,31 +115,45 @@ $($links -join "`n")
 }
 
 function RenderIndexPage($Blogs, [int]$CurrentPage, [int]$TotalPages, $Site) {
-    $blogBoxes = ($Blogs | ForEach-Object { RenderBlogBox $_ }) -join "`n`n"
+    if ($Blogs.Count -gt 0) {
+        $blogBoxes = ($Blogs | ForEach-Object { RenderBlogBox $_ }) -join "`n`n"
+    } else {
+        $blogBoxes = '          <p class="empty">No posts yet. The first one is on its way.</p>'
+    }
     $pagination = RenderPagination $CurrentPage $TotalPages
-    $pageTitle = if ($CurrentPage -eq 1) { $Site.title } else { "$($Site.title) - Page $CurrentPage" }
+    $pageTitle = if ($CurrentPage -eq 1) { $Site.title } else { "$($Site.title) | Page $CurrentPage" }
+
+    $about = ($Site.about | ForEach-Object { "          <p>$(HtmlEncode $_)</p>" }) -join "`n"
+    $topics = ($Site.topics | ForEach-Object { "          <li>$(HtmlEncode $_)</li>" }) -join "`n"
+    $links = ($Site.links | ForEach-Object { "          <a href=`"$(HtmlEncode $_.url)`">$(HtmlEncode $_.label)</a>" }) -join "`n"
 
     return Render-Template "index.html" @{
-        PAGE_TITLE = $pageTitle
-        HEADING    = $Site.heading
-        TAGLINE    = $Site.tagline
-        BLOG_LIST  = $blogBoxes
-        PAGINATION = $pagination
+        PAGE_TITLE  = HtmlEncode $pageTitle
+        TITLE       = HtmlEncode $Site.title
+        DESCRIPTION = HtmlEncode $Site.tagline
+        ROLE        = HtmlEncode $Site.role
+        HEADING     = HtmlEncode $Site.heading
+        TAGLINE     = HtmlEncode $Site.tagline
+        ABOUT       = $about
+        TOPICS      = $topics
+        LINKS       = $links
+        BLOG_LIST   = $blogBoxes
+        PAGINATION  = $pagination
     }
 }
 
 Shrink-Images
 
 $site = Get-Content $SiteJson -Raw -Encoding UTF8 | ConvertFrom-Json
-$blogs = Get-Content $BlogsJson -Raw -Encoding UTF8 | ConvertFrom-Json
-$blogs = $blogs | Sort-Object { [datetime]::ParseExact($_.date, "yyyy-MM-dd", $null) } -Descending
+$blogs = @(Get-Content $BlogsJson -Raw -Encoding UTF8 | ConvertFrom-Json)
+$blogs = @($blogs | Sort-Object { [datetime]::ParseExact($_.date, "yyyy-MM-dd", $null) } -Descending)
 $totalPages = [Math]::Max(1, [Math]::Ceiling($blogs.Count / $BlogsPerPage))
 
 Get-ChildItem (Join-Path $Root "page-*.html") -ErrorAction SilentlyContinue | Remove-Item
 
 for ($pageNum = 1; $pageNum -le $totalPages; $pageNum++) {
     $start = ($pageNum - 1) * $BlogsPerPage
-    $pageBlogs = $blogs[$start..([Math]::Min($start + $BlogsPerPage - 1, $blogs.Count - 1))]
+    $pageBlogs = @($blogs | Select-Object -Skip $start -First $BlogsPerPage)
     $html = RenderIndexPage $pageBlogs $pageNum $totalPages $site
     $outPath = if ($pageNum -eq 1) { Join-Path $Root "index.html" } else { Join-Path $Root "page-$pageNum.html" }
     [System.IO.File]::WriteAllText($outPath, $html.Replace("`r`n", "`n"))

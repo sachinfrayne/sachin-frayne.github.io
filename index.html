@@ -3,71 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="I&#x27;m a search engineer who likes to understand how things work under the hood, from search engine internals to the Qdrant storage engine and the Rust code behind it." />
     <title>Sachin Frayne</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="container">
-      <h1>Hi, I'm Sachin.</h1>
-      <p class="site-tagline">I am a Search Engineer passionate about understanding how large scale search systems work. Over the last 10+ years I've worked extensively with Elasticsearch, distributed systems, benchmarking, and information retrieval. I use this site to document what I learn, publish in depth technical articles, and share experiments that I hope are useful to other engineers. If you're interested in search, vector databases, retrieval systems, or distributed infrastructure, you'll probably find something here.</p>
-      <div class="blog-list">
-        <article class="blog-box">
-          <div class="blog-content">
-            <div class="text">
-              <h2>
-                <a href="blogs/elasticsearch-murmur3-shard-routing.html">Elasticsearch Murmur3 Shard Routing</a>
-              </h2>
-              <p class="blog-date">
-                <time datetime="2026-06-25">25 June 2026</time>
-              </p>
-              <p>Elasticsearch's routing formula uses MurmurHash3, but the docs never say so.</p>
-            </div>
-            <img
-              src="images/tiny/elasticsearch-murmur3-shard-routing.jpg"
-              alt="Elasticsearch Murmur3 Shard Routing"
-            />
-          </div>
-        </article>
-
-
-        <article class="blog-box">
-          <div class="blog-content">
-            <div class="text">
-              <h2>
-                <a href="blogs/elasticsearch-binary-data-type.html">Elasticsearch Binary Data Type</a>
-              </h2>
-              <p class="blog-date">
-                <time datetime="2023-06-09">9 June 2023</time>
-              </p>
-              <p>What is the binary data type even for?</p>
-            </div>
-            <img
-              src="images/tiny/elasticsearch-binary-data-type.jpg"
-              alt="Elasticsearch Binary Data Type"
-            />
-          </div>
-        </article>
-
-
-        <article class="blog-box">
-          <div class="blog-content">
-            <div class="text">
-              <h2>
-                <a href="blogs/elasticsearch-explain-api.html">Elasticsearch Explain API</a>
-              </h2>
-              <p class="blog-date">
-                <time datetime="2023-06-09">9 June 2023</time>
-              </p>
-              <p>Do you want to understand why your documents got those scores?</p>
-            </div>
-            <img
-              src="images/tiny/elasticsearch-explain-api.jpg"
-              alt="Elasticsearch Explain API"
-            />
-          </div>
-        </article>
-
+    <header class="site-header">
+      <div class="container site-header-inner">
+        <a class="site-name" href="index.html">Sachin Frayne</a>
+        <a href="#writing">Writing</a>
       </div>
-    </div>
+    </header>
+
+    <main class="container">
+      <section class="hero">
+        <p class="eyebrow">Search Engineer</p>
+        <h1>Hi, I&#x27;m Sachin.</h1>
+        <p class="lead">I&#x27;m a search engineer who likes to understand how things work under the hood, from search engine internals to the Qdrant storage engine and the Rust code behind it.</p>
+        <div class="about">
+          <p>I have spent over 10 years working on search and information retrieval, with a lot of hands-on time in distributed systems, benchmarking, and search engine internals. Along the way I have learned that the hard problems are rarely the ones in the documentation. They are the problem a user describes, the default nobody questions, and the internals nobody explains.</p>
+          <p>I now work on vector search at Qdrant, where I am digging into how the storage engine works, from collections and segments to the Rust code that runs it. A big part of my job is helping people turn the problem they describe into the problem they actually have. This site is where I write down what I learn, usually as long form explanations that I wish I had found when I started.</p>
+        </div>
+        <ul class="topics" aria-label="Topics I write about">
+          <li>Vector search</li>
+          <li>Qdrant internals</li>
+          <li>Rust</li>
+          <li>Distributed systems</li>
+          <li>Benchmarking</li>
+          <li>Helping users solve real problems</li>
+          <li>Learning in public</li>
+        </ul>
+        <nav class="elsewhere" aria-label="Elsewhere">
+          <a href="https://github.com/sachinfrayne">GitHub</a>
+        </nav>
+      </section>
+
+      <section class="posts" id="writing">
+        <h2>Writing</h2>
+        <div class="post-grid">
+        <article class="post-card">
+
+          <div class="post-card-body">
+            <p class="post-meta">
+              <time datetime="2026-11-12">12 November 2026</time>
+            </p>
+            <h3 class="post-card-title">
+              <a href="blogs/mac-setup.html">One Command for a New Mac</a>
+            </h3>
+            <p class="post-card-excerpt">How one repo keeps a Mac development environment reproducible: one command, one package list, and a verify step that catches drift.</p>
+          </div>
+        </article>
+
+        </div>
+      </section>
+    </main>
   </body>
 </html>
