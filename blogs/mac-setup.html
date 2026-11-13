@@ -19,11 +19,12 @@
         </header>
 
         <div class="post-body">
+          <img src="../images/mac-setup.jpg" alt="Diagram of the mac-setup repo: one package list feeds both setup.sh, which installs each item, and scripts/verify.sh, which checks each item." />
           <p>
             The problem is simple to describe. A development machine accumulates tools: a CLI here, an editor extension there, a shell alias you added at midnight and never wrote down. When the laptop changes, those tools don't come with it, and you rebuild them from memory.
           </p>
           <p>
-            <a href="https://github.com/sachinfrayne">mac-setup</a> is my answer. It is a repo that installs the tools I use daily, configures my shell and editors, and checks that everything is still there. The whole thing starts with one command:
+            <a href="https://github.com/sachinfrayne/mac-setup">mac-setup</a> is my answer. It is a repo that installs the tools I use daily, configures my shell and editors, and checks that everything is still there. The whole thing starts with one command:
           </p>
           <pre><code>git clone https://github.com/sachinfrayne/mac-setup.git ~/Source/mac-setup
 cd ~/Source/mac-setup
@@ -31,6 +32,10 @@ cd ~/Source/mac-setup
           <p>
             It is safe to run more than once, which matters more than it sounds. The script checks what is already installed before it changes anything, so the same command works on a fresh machine and on the one I use every day.
           </p>
+          <p>
+            After that first run, you never need to type the path again. The setup adds a <code>mac</code> command to your shell, so you can run the whole thing from any terminal:
+          </p>
+          <pre><code>mac</code></pre>
 
           <h2>One list, two jobs</h2>
           <p>

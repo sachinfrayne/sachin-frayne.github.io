@@ -3,6 +3,8 @@
     "title": "One Command for a New Mac",
     "date": "2026-11-12",
     "url": "blogs/mac-setup.html",
-    "excerpt": "How one repo keeps a Mac development environment reproducible: one command, one package list, and a verify step that catches drift."
+    "excerpt": "How one repo keeps a Mac development environment reproducible: one command, one package list, and a verify step that catches drift.",
+    "image": "images/tiny/mac-setup.jpg",
+    "imageAlt": "Diagram of the mac-setup repo: one package list feeds both setup.sh, which installs each item, and scripts/verify.sh, which checks each item."
   }
 ]
