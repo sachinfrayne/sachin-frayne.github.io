@@ -71,7 +71,7 @@
   "description": "A quick coconut curry with crispy tofu, lime, and fresh basil."
 }</code></pre>
           <p>
-            Each field needs a type, and the type decides how it can be filtered. You create an index for a field to make that filter fast:
+            Each field needs a type, and the type decides how it can be filtered. You create an <a href="https://qdrant.tech/documentation/manage-data/indexing/">index</a> for a field to make that filter fast:
           </p>
           <ul>
             <li><code>keyword</code> for exact matches on strings, such as <code>cuisine</code>.</li>
@@ -103,7 +103,7 @@
           
 <h2>Set the schema up once, before the first load</h2>
           <p>
-            Create the collection with the size, distance, and quantization covered below. The server fills in defaults for everything else. In the version I tested (1.20.0), those defaults were an HNSW graph with <code>m</code> of 16 and <code>ef_construct</code> of 100, and payloads stored on disk. Those are sensible starting points. Change them only when a measurement tells you to.
+            Create the collection with the size, distance, and quantization covered below. The server fills in defaults for everything else. In the version I tested (1.20.0), those defaults were an <a href="https://qdrant.tech/documentation/manage-data/indexing/">HNSW graph</a> with <code>m</code> of 16 and <code>ef_construct</code> of 100, and payloads stored on disk. Those are sensible starting points. Change them only when a measurement tells you to.
           </p>
           <pre><code>PUT /collections/recipes
 {
@@ -122,7 +122,7 @@
   }
 }</code></pre>
           <p>
-            Strict mode is the setting that protects the collection from the open schema. With <code>unindexed_filtering_retrieve</code> set to <code>false</code>, any search that filters on a field without an index is rejected with an error, instead of running slowly. Here is what the server returned when I searched on a field I had not declared, using a document I had loaded without a schema for it:
+            <a href="https://qdrant.tech/documentation/manage-data/indexing/">Strict mode</a> is the setting that protects the collection from the open schema. With <code>unindexed_filtering_retrieve</code> set to <code>false</code>, any search that filters on a field without an index is rejected with an error, instead of running slowly. Here is what the server returned when I searched on a field I had not declared, using a document I had loaded without a schema for it:
           </p>
           <pre><code>Bad request: Index required but not found for "my_awesome_new_long" of one of the following types: [float, integer]. Help: Create an index for this key or use a different filter.</code></pre>
           <p>
@@ -149,7 +149,7 @@ PUT /collections/recipes/index
             Three settings are fixed when you create the collection: the vector size, the distance, and the compression. Each one is cheap to choose now and expensive to change later.
           </p>
           <p>
-            A vector has a fixed number of dimensions, and a collection has a fixed vector size. A 384-dimension embedding model needs a 384-dimension collection. Qdrant checks this on every write, so a mismatch fails immediately. When I sent a two-number vector to a four-number collection, the server answered with <code>expected dim: 4, got 2</code>.
+            A vector has a fixed number of dimensions, and <a href="https://qdrant.tech/documentation/manage-data/collections/">a collection</a> has a fixed vector size. A 384-dimension embedding model needs a 384-dimension collection. Qdrant checks this on every write, so a mismatch fails immediately. When I sent a two-number vector to a four-number collection, the server answered with <code>expected dim: 4, got 2</code>.
           </p>
           <p>
             Because the size is set when the collection is created, changing models usually means creating a new collection and re-embedding your data. Pick the size from the model you plan to use, not from the model you tried first.
@@ -167,7 +167,7 @@ PUT /collections/recipes/index
             A float32 value takes 4 bytes, so a vector with 384 dimensions takes 1,536 bytes. A million of them is about 1.5 GB before any index is built. At 1536 dimensions, a million vectors is about 6.1 GB. Do this sum before you pick hardware, because it decides almost everything else.
           </p>
           <p>
-            Quantization shrinks that number. Qdrant's TurboQuant has five settings, and the docs map them to compression ratios:
+            <a href="https://qdrant.tech/documentation/manage-data/quantization/">Quantization</a> shrinks that number. Qdrant's <a href="https://qdrant.tech/articles/turboquant-quantization/">TurboQuant</a> has five settings, and the docs map them to compression ratios:
           </p>
           <ul>
             <li><code>bits8</code>, roughly 4x compression and the highest accuracy. It is available from version 1.20.</li>
@@ -183,7 +183,7 @@ PUT /collections/recipes/index
           
 <h2>A recipe search, end to end</h2>
           <p>
-            The goal is one collection, a handful of recipes, and one query that uses both meaning and a hard filter. The example runs in Qdrant Cloud, where Qdrant Cloud Inference creates the vectors. You send text and a model name, and nothing runs on your machine. Create a free cluster, open the Inference tab, and you are ready to follow along. Every request in this example is ready to paste into the Qdrant Cloud dev tools console in the <a href="https://github.com/sachinfrayne/sachin-frayne.github.io/blob/main/guides/recipe-search-cloud.md">recipe search guide on GitHub</a>.
+            The goal is one collection, a handful of recipes, and one query that uses both meaning and a hard filter. The example runs in Qdrant Cloud, where <a href="https://qdrant.tech/documentation/inference/cloud-inference/">Qdrant Cloud Inference</a> creates the vectors. You send text and a model name, and nothing runs on your machine. Create a free cluster, open the Inference tab, and you are ready to follow along. Every request in this example is ready to paste into the Qdrant Cloud dev tools console in the <a href="https://github.com/sachinfrayne/sachin-frayne.github.io/blob/main/guides/recipe-search-cloud.md">recipe search guide on GitHub</a>.
           </p>
           <p>
             Load a recipe by sending its text and a model name. Qdrant embeds the text inside the cluster and stores the vector next to the payload. Replace the model name with one from the Inference tab in the Qdrant Cloud console, and make sure the collection's size matches that model's dimensions.
@@ -239,6 +239,18 @@ PUT /collections/recipes/index
           <p>
             So set the schema first. Declare the fields you filter on, give each one the right type and index, turn on strict mode so mistakes fail loudly, and keep the size and distance matched to your model. The few minutes you spend here decide how fast your searches run and whether they return what you expect.
           </p>
+          <h2>Further reading</h2>
+          <p>
+            The official docs go deeper on each part of this post. These are the pages to read next:
+          </p>
+          <ul>
+            <li><a href="https://qdrant.tech/documentation/">Qdrant documentation</a>: the starting point for installing, configuring, and using Qdrant.</li>
+            <li><a href="https://qdrant.tech/documentation/manage-data/collections/">Collections</a>: vector size, distance, and how collections are configured.</li>
+            <li><a href="https://qdrant.tech/documentation/manage-data/indexing/">Indexing</a>: payload index types, strict mode, and why filtered HNSW needs indexes created before ingestion.</li>
+            <li><a href="https://qdrant.tech/documentation/manage-data/quantization/">Quantization</a>: scalar, binary, product, and TurboQuant settings with their compression ratios.</li>
+            <li><a href="https://qdrant.tech/articles/turboquant-quantization/">TurboQuant in Qdrant</a>: how the bit depths were benchmarked against scalar and binary quantization.</li>
+            <li><a href="https://qdrant.tech/documentation/inference/cloud-inference/">Cloud Inference</a>: how the text-in, vector-out requests in the recipe example work on Qdrant Cloud.</li>
+          </ul>
         </div>
       </article>
 
