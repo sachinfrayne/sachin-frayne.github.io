@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A tour of the tools in my mac-setup repo: what each group is for, and why each one earned a place on the list." />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Sachin Frayne" />
+    <meta property="og:title" content="What Gets Installed, and Why" />
+    <meta property="og:description" content="A tour of the tools in my mac-setup repo: what each group is for, and why each one earned a place on the list." />
+    <meta property="og:url" content="https://sachinfrayne.com/blogs/mac-setup-tools.html" />
+    <meta property="og:image" content="https://sachinfrayne.com/images/mac-setup-tools.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>What Gets Installed, and Why | Sachin Frayne</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <main class="post">
+      <article>
+        <header class="post-header">
+          <p class="post-meta">
+            <time datetime="2026-11-16">16 November 2026</time>
+          </p>
+          <h1>What Gets Installed, and Why</h1>
+          <p class="post-lede">My mac-setup repo installs about 50 Homebrew formulae and casks. This is a tour of what they are, grouped by the job they do, and why each group is on my machine.</p>
+        </header>
+
+        <div class="post-body">
+          <img src="../images/mac-setup-tools.jpg" alt="Illustrated grid of the tools in the mac-setup repo, grouped into containers and Kubernetes, cloud, languages, shell, AI, and apps." />
+
+          <p>
+            The first post in this series covered how the repo installs a machine. This one looks at what it installs. The list lives in one file, so every item is a choice, and each choice should be easy to explain. Here is how I think about the groups, and the reason behind each one.
+          </p>
+
+          <h2>Containers and Kubernetes</h2>
+          <p>
+            This is the biggest group in the repo. <code>podman</code> runs containers without a background daemon, and it works as a drop-in replacement for the Docker CLI. <code>podman-desktop</code> gives me a window for the same containers when I want one. <code>crane</code> and <code>skopeo</code> inspect and copy container images between registries without pulling them to my machine first.
+          </p>
+          <p>
+            For Kubernetes itself, <code>kubectl</code> is the official CLI and the one everything else builds on. <code>helm</code> installs applications onto a cluster, and <code>kustomize</code> customises plain YAML without templating. <code>kubectx</code> switches between contexts and namespaces quickly, <code>k9s</code> is a terminal UI for watching a cluster, <code>stern</code> tails logs from many pods at once, and <code>minikube</code> runs a small local cluster. <code>lens</code> is the graphical version for when I want to click around instead.
+          </p>
+
+          <h2>Cloud and infrastructure</h2>
+          <p>
+            Each cloud has its own CLI, and the one that matches the account you work in needs to be installed and authenticated. <code>awscli</code>, <code>azure-cli</code>, and <code>gcloud-cli</code> cover the three big clouds. <code>opentofu</code> is the open-source fork of Terraform, for describing infrastructure as code. <code>sf</code> is the Salesforce CLI, which I added to the repo most recently, for querying orgs and metadata from the terminal.
+          </p>
+
+          <h2>Languages and data</h2>
+          <p>
+            <code>node</code> and <code>nvm</code> cover JavaScript and TypeScript tooling, and <code>nvm</code> switches Node versions per project. <code>uv</code> manages Python packages and projects quickly, and <code>openjdk@21</code> is there for JVM projects. <code>openpyxl</code> is a Python library for reading and writing spreadsheets from scripts.
+          </p>
+
+          <h2>Shell tools</h2>
+          <p>
+            These make the terminal faster to use. <code>ripgrep</code> searches code and text far faster than plain grep. <code>fzf</code> is a fuzzy finder for files, history, and branches. <code>eza</code> is a more readable <code>ls</code>, <code>jq</code> and <code>yq</code> query JSON and YAML, <code>httpie</code> makes API calls readable, and <code>direnv</code> loads per-project environment variables. <code>gh</code> is the GitHub CLI for pull requests and issues without leaving the terminal.
+          </p>
+          <p>
+            The repo also keeps shell scripts honest. <code>shellcheck</code> finds bugs in shell scripts, and <code>shfmt</code> keeps their formatting consistent. <code>mkcert</code> creates locally trusted HTTPS certificates, so local services don't show browser warnings.
+          </p>
+
+          <h2>AI tools</h2>
+          <p>
+            <code>claude</code> is the desktop app, and <code>claude-code</code> is the coding agent in the terminal. <code>gemini-cli</code> is the Google equivalent, in the terminal. <code>ollama</code> runs open models locally, so requests stay on your machine.
+          </p>
+
+          <h2>Apps</h2>
+          <p>
+            <code>iterm2</code> is the terminal, and <code>bettercmdtab</code> improves command tab completion in it. <code>raycast</code> replaces Spotlight as a launcher. <code>visual-studio-code</code> is the editor, and <code>font-hack-nerd-font</code> gives the prompt its icons. <code>tableplus</code> queries databases through a GUI, <code>postman</code> tests HTTP APIs, and <code>libreoffice</code> handles spreadsheets that need to round-trip to Excel. <code>slack</code> is for team chat, <code>espanso</code> expands text snippets, <code>logi-options+</code> configures my mouse and keyboard, and <code>lulu</code> is an outbound firewall that alerts me when something connects to the network.
+          </p>
+
+          <h2>Your list will look different</h2>
+          <p>
+            Nothing here is a recommendation. The value is in having a list and being able to say why each item is on it. Go through yours once, and remove anything you can't explain. The next time you add one, write a line about it in the commit message, so the reason survives.
+          </p>
+        </div>
+      </article>
+
+      <p class="post-footer-link"><a href="../index.html#writing">&larr; Back to all posts</a></p>
+    </main>
+  </body>
+</html>

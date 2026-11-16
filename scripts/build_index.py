@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import html
 import json
-import shutil
-import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -17,57 +15,34 @@ SITE_JSON = ROOT / "site.json"
 TEMPLATES_DIR = ROOT / "templates"
 IMAGES_DIR = ROOT / "images"
 TINY_DIR = IMAGES_DIR / "tiny"
-THUMBNAIL_SCALE = "30%"
 THUMBNAIL_SCALE_FACTOR = 0.3
 
 
-def shrink_with_magick(magick: str, image: Path, output: Path) -> None:
-    subprocess.run(
-        [magick, str(image), "-resize", THUMBNAIL_SCALE, str(output)],
-        check=True,
-    )
-
-
-def shrink_with_pillow(image: Path, output: Path) -> None:
-    from PIL import Image
-
-    with Image.open(image) as img:
-        width, height = img.size
-        new_size = (
-            max(1, int(width * THUMBNAIL_SCALE_FACTOR)),
-            max(1, int(height * THUMBNAIL_SCALE_FACTOR)),
-        )
-        resized = img.resize(new_size, Image.Resampling.LANCZOS)
-        resized.save(output, format="JPEG", quality=85, optimize=True)
-
-
 def shrink_images() -> None:
+    """Write a 30% copy of each full-size JPG in images/ to images/tiny/."""
+    try:
+        from PIL import Image
+    except ImportError as exc:
+        raise SystemExit("Thumbnails need Pillow. Install it with: pip install Pillow") from exc
+
     TINY_DIR.mkdir(parents=True, exist_ok=True)
     images = sorted(IMAGES_DIR.glob("*.jpg"))
     if not images:
         print("No source images found in images/.")
         return
 
-    magick = shutil.which("magick")
-    method = "ImageMagick" if magick else None
-
     for image in images:
         output = TINY_DIR / image.name
-        if magick:
-            shrink_with_magick(magick, image, output)
-        else:
-            try:
-                shrink_with_pillow(image, output)
-                method = "Pillow"
-            except ImportError as exc:
-                raise SystemExit(
-                    "Thumbnail generation requires ImageMagick (magick) or Pillow "
-                    "(pip install Pillow)."
-                ) from exc
+        with Image.open(image) as img:
+            width, height = img.size
+            new_size = (
+                max(1, int(width * THUMBNAIL_SCALE_FACTOR)),
+                max(1, int(height * THUMBNAIL_SCALE_FACTOR)),
+            )
+            img.resize(new_size, Image.Resampling.LANCZOS).save(
+                output, format="JPEG", quality=85, optimize=True
+            )
         print(f"Shrunk {image.name} -> tiny/{image.name}")
-
-    if method == "Pillow":
-        print("Thumbnails generated using Pillow (install ImageMagick for magick CLI).")
 
 
 def render_template(name: str, variables: dict[str, str]) -> str:

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Vector search is decided before the first point is stored. Dimensions, distance, quantization, and payload types, plus a small recipe search example." />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Sachin Frayne" />
+    <meta property="og:title" content="Qdrant Is a Storage Engine" />
+    <meta property="og:description" content="Vector search is decided before the first point is stored. Dimensions, distance, quantization, and payload types, plus a small recipe search example." />
+    <meta property="og:url" content="https://sachinfrayne.com/blogs/qdrant-is-a-storage-engine.html" />
+    <meta property="og:image" content="https://sachinfrayne.com/images/qdrant-is-a-storage-engine.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Qdrant Is a Storage Engine | Sachin Frayne</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header-inner">
+        <a class="site-name" href="../index.html">Sachin Frayne</a>
+        <a href="../index.html#writing">All posts</a>
+      </div>
+    </header>
+
+    <main class="post">
+      <article>
+        <header class="post-header">
+          <p class="post-meta">
+            <time datetime="2026-11-16">16 November 2026</time>
+          </p>
+          <h1>Qdrant Is a Storage Engine</h1>
+          <p class="post-lede">Qdrant lets you send any fields you like, and the write always succeeds. That is why it is easy to start, and it is also why the schema is the first thing to get right. The storage decisions you make on day one decide how fast your searches run and whether your filters return what you expect, long before anything looks wrong.</p>
+        </header>
+
+        <div class="post-body">
+          <img src="../images/qdrant-is-a-storage-engine.jpg" alt="Diagram of the recipes collection: three segments of vectors, a write-ahead log, and a payload schema where indexed fields are green and undeclared fields are grey." />
+          <h2>The first point is the hard part</h2>
+          <p>
+            Storing one point looks easy. You send an ID, a list of numbers, and some fields you want to filter on. Qdrant accepts it, the search returns something, and the demo works. The trouble starts a few weeks later, when the collection holds a few million points and you find out that the memory use is four times what you planned, a filter returns nothing even though the data is there, or the model you switched to produces vectors of a different size than the collection expects.
+          </p>
+          <p>
+            Each of those problems was decided at storage time, long before any query ran. This post starts with the schema, because that is where the trouble usually begins. Then it walks through the other storage decisions and builds a small recipe search, so you can see the whole path from empty collection to a filtered result.
+          </p>
+
+          
+<h2>Open schema: easy to start, easier with a plan</h2>
+          <p>
+            Qdrant is an open schema document store on purpose. You can send a point with any fields you like, and the write succeeds. That is why it is easy to start. It is also why the users who get the most from Qdrant are the ones who decide their schema early. Every field you leave undeclared costs you something, and it shows up later, when a query slows down or a filter returns fewer results than you expected.
+          </p>
+          <p>
+            The first cost is speed. A filter on an undeclared field still works, but Qdrant has to scan for it. The result is correct, but the query is slower, and on large collections those queries can take resources away from other searches. On a small test that is invisible.
+          </p>
+          <p>
+            The second cost is silent mistakes, which the next section shows. A value with the wrong type is stored, and the filter skips it. Nothing reports it.
+          </p>
+          <p>
+            The third cost runs the other way: indexes you do not need. An index is not free. Each one takes memory and disk space, and building it takes compute. If you index a field and never filter on it, you pay that cost and get nothing back. Index a field because a filter needs it, and only then.
+          </p>
+
+          
+<h2>Payload: the fields you will filter on</h2>
+          <p>
+            Each point also carries a payload, a JSON object with the fields you want to filter on. Here is one recipe:
+          </p>
+          <pre><code>{
+  "title": "Green Curry with Tofu",
+  "cuisine": "thai",
+  "minutes": 25,
+  "vegetarian": true,
+  "added_on": "2026-10-03",
+  "description": "A quick coconut curry with crispy tofu, lime, and fresh basil."
+}</code></pre>
+          <p>
+            Each field needs a type, and the type decides how it can be filtered. You create an index for a field to make that filter fast:
+          </p>
+          <ul>
+            <li><code>keyword</code> for exact matches on strings, such as <code>cuisine</code>.</li>
+            <li><code>integer</code> or <code>float</code> for ranges, such as <code>minutes &lt; 30</code>.</li>
+            <li><code>datetime</code> for time ranges, such as <code>added_on</code> after a date.</li>
+            <li><code>text</code> for finding words inside a longer string, such as <code>description</code>.</li>
+            <li><code>bool</code>, <code>geo</code>, and <code>uuid</code> for the remaining cases.</li>
+          </ul>
+
+          <h3>Qdrant stores what you send</h3>
+          <p>
+            This is the part that surprised me most, so I tested it on a throwaway collection. Four recipes went in with the indexes from above (<code>cuisine</code> as keyword, <code>minutes</code> as integer, <code>added_on</code> as datetime). One field, <code>rating</code>, was never declared at all.
+          </p>
+          <ul>
+            <li>A field with no schema still filters. A range on <code>rating</code> returned the right points. Qdrant has to scan for that field, so it is slower, but it does not fail.</li>
+            <li>A number stored as a string is skipped by a range filter. <code>"minutes": "20"</code> was excluded from <code>minutes &lt; 30</code>, even with an integer index in place. It did match an exact search for the string <code>"20"</code>, so the value is stored as text and nothing converts it.</li>
+            <li>A bad date is stored. <code>"last tuesday"</code> was accepted, and the datetime range skipped it.</li>
+          </ul>
+          <p>
+            The write succeeds in every case, so Qdrant will not flag the problem for you. A quick check catches it. The collection info reports how many points hold each indexed field, and the count drops when values fail the type:
+          </p>
+          <pre><code>"payload_schema": {
+  "minutes": { "data_type": "integer", "points": 3 }
+}</code></pre>
+          <p>
+            That collection held four points, so three means one value was never indexed. Compare those counts with the number of points after every bulk load. The type check belongs in the code that prepares the points, not in the search query.
+          </p>
+
+          
+<h2>Set the schema up once, before the first load</h2>
+          <p>
+            Create the collection with the size, distance, and quantization covered below. The server fills in defaults for everything else. In the version I tested (1.20.0), those defaults were an HNSW graph with <code>m</code> of 16 and <code>ef_construct</code> of 100, and payloads stored on disk. Those are sensible starting points. Change them only when a measurement tells you to.
+          </p>
+          <pre><code>PUT /collections/recipes
+{
+  "vectors": {
+    "size": 384,
+    "distance": "Cosine"
+  },
+  "quantization_config": {
+    "turbo": {
+      "bits": "bits4"
+    }
+  },
+  "strict_mode_config": {
+    "enabled": true,
+    "unindexed_filtering_retrieve": false
+  }
+}</code></pre>
+          <p>
+            Strict mode is the setting that protects the collection from the open schema. With <code>unindexed_filtering_retrieve</code> set to <code>false</code>, any search that filters on a field without an index is rejected with an error, instead of running slowly. Here is what the server returned when I searched on a field I had not declared, using a document I had loaded without a schema for it:
+          </p>
+          <pre><code>Bad request: Index required but not found for "my_awesome_new_long" of one of the following types: [float, integer]. Help: Create an index for this key or use a different filter.</code></pre>
+          <p>
+            Strict mode does not stop writes. An undeclared field still gets stored, so the schema you write down and the indexes you create remain your responsibility. What strict mode gives you is a clear error the first time someone filters on a field you did not index, rather than a slow query in production. On Qdrant Cloud, these settings are on by default.
+          <p>
+            Then declare the indexes for every field you filter on. Send one request per field:
+          </p>
+          <pre><code># one request per field
+PUT /collections/recipes/index
+{ "field_name": "cuisine", "field_schema": "keyword" }
+
+PUT /collections/recipes/index
+{ "field_name": "minutes", "field_schema": "integer" }
+
+PUT /collections/recipes/index
+{ "field_name": "description", "field_schema": "text" }</code></pre>
+          <p>
+            Do this before you load the data, so the schema is settled from the start. Qdrant also accepts index definitions after points are loaded. In my test, an index created on 200 existing points covered all of them, and the filter returned the same results once it was ready. The docs go further, though: an index added later does not get the filter-aware HNSW edges until you rebuild the HNSW index. So create payload indexes before you ingest data where you can, and treat a late index as a cost you have to pay.
+          </p>
+
+          
+<h2>Dimensions: fixed for the life of the collection</h2>
+          <p>
+            Three settings are fixed when you create the collection: the vector size, the distance, and the compression. Each one is cheap to choose now and expensive to change later.
+          </p>
+          <p>
+            A vector has a fixed number of dimensions, and a collection has a fixed vector size. A 384-dimension embedding model needs a 384-dimension collection. Qdrant checks this on every write, so a mismatch fails immediately. When I sent a two-number vector to a four-number collection, the server answered with <code>expected dim: 4, got 2</code>.
+          </p>
+          <p>
+            Because the size is set when the collection is created, changing models usually means creating a new collection and re-embedding your data. Pick the size from the model you plan to use, not from the model you tried first.
+          </p>
+
+          
+<h2>Distance: match the model</h2>
+          <p>
+            Qdrant can compare vectors with <code>Cosine</code>, <code>Dot</code>, or <code>Euclid</code> distance. Many embedding models document which one they expect, so check the model's documentation first. Cosine is the common choice for text embeddings. Qdrant does not know which model produced your vectors, so a mismatch does not raise an error, and your results can get worse without any warning.
+          </p>
+
+          
+<h2>Memory: the arithmetic you should do first</h2>
+          <p>
+            A float32 value takes 4 bytes, so a vector with 384 dimensions takes 1,536 bytes. A million of them is about 1.5 GB before any index is built. At 1536 dimensions, a million vectors is about 6.1 GB. Do this sum before you pick hardware, because it decides almost everything else.
+          </p>
+          <p>
+            Quantization shrinks that number. Qdrant's TurboQuant has five settings, and the docs map them to compression ratios:
+          </p>
+          <ul>
+            <li><code>bits8</code>, roughly 4x compression and the highest accuracy. It is available from version 1.20.</li>
+            <li><code>bits4</code>, the default, roughly 8x compression. The Qdrant article reports recall close to scalar quantization at half the storage.</li>
+            <li><code>bits2</code>, roughly 16x compression.</li>
+            <li><code>bits1_5</code>, roughly 21x compression.</li>
+            <li><code>bits1</code>, roughly 32x compression, for when memory matters more than the last few points of recall.</li>
+          </ul>
+          <p>
+            The lower the bit depth, the more recall you give up. Choose with a test set from your own data, not from a benchmark on someone else's. A quick way to check is to run the same queries against a float32 collection and a quantized one, and compare the top results.
+          </p>
+
+          
+<h2>A recipe search, end to end</h2>
+          <p>
+            The goal is one collection, a handful of recipes, and one query that uses both meaning and a hard filter. The example runs in Qdrant Cloud, where Qdrant Cloud Inference creates the vectors. You send text and a model name, and nothing runs on your machine. Create a free cluster, open the Inference tab, and you are ready to follow along. Every request in this example is ready to paste into the Qdrant Cloud dev tools console in the <a href="https://github.com/sachinfrayne/sachin-frayne.github.io/blob/main/guides/recipe-search-cloud.md">recipe search guide on GitHub</a>.
+          </p>
+          <p>
+            Load a recipe by sending its text and a model name. Qdrant embeds the text inside the cluster and stores the vector next to the payload. Replace the model name with one from the Inference tab in the Qdrant Cloud console, and make sure the collection's size matches that model's dimensions.
+          </p>
+          <pre><code>PUT /collections/recipes/points?wait=true
+{
+  "points": [
+    {
+      "id": 1,
+      "vector": {
+        "text": "A quick coconut curry with crispy tofu, lime, and fresh basil.",
+        "model": "&lt;model from the Inference tab&gt;"
+      },
+      "payload": {
+        "title": "Green Curry with Tofu",
+        "cuisine": "thai",
+        "minutes": 25,
+        "vegetarian": true,
+        "added_on": "2026-10-03",
+        "description": "A quick coconut curry with crispy tofu, lime, and fresh basil."
+      }
+    }
+  ]
+}</code></pre>
+          <p>
+            Then ask for what you want in plain language, with a hard filter on the fields you indexed. This query asks for a quick, vegetarian Thai dish, and Qdrant applies the filter alongside the vector search:
+          </p>
+          <pre><code>POST /collections/recipes/points/query
+{
+  "query": {
+    "text": "something quick and vegetarian for dinner",
+    "model": "&lt;model from the Inference tab&gt;"
+  },
+  "filter": {
+    "must": [
+      { "key": "cuisine", "match": { "value": "thai" } },
+      { "key": "minutes", "range": { "lt": 30 } }
+    ]
+  },
+  "limit": 3
+}</code></pre>
+          <p>
+            That is the whole example: one collection, three indexes, and two requests. Load the rest of the recipes the same way, and the query will use the same filter logic on all of them.
+          </p>
+
+
+          
+
+<h2>What to take away</h2>
+          <p>
+            Qdrant is easy to start because it is an open schema by design: it accepts almost anything you send. That openness is deliberate, and it is a power tool. A filter on an undeclared field still works, but slower. A number stored as a string is quietly skipped. A bad date is stored without a word. Qdrant will not warn you about any of it.
+          </p>
+          <p>
+            So set the schema first. Declare the fields you filter on, give each one the right type and index, turn on strict mode so mistakes fail loudly, and keep the size and distance matched to your model. The few minutes you spend here decide how fast your searches run and whether they return what you expect.
+          </p>
+        </div>
+      </article>
+
+      <p class="post-footer-link"><a href="../index.html#writing">&larr; Back to all posts</a></p>
+    </main>
+  </body>
+</html>

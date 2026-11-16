@@ -6,5 +6,21 @@
     "excerpt": "How one repo keeps a Mac development environment reproducible: one command, one package list, and a verify step that catches drift.",
     "image": "images/tiny/mac-setup.jpg",
     "imageAlt": "Diagram of the mac-setup repo: one package list feeds both setup.sh, which installs each item, and scripts/verify.sh, which checks each item."
+  },
+  {
+    "title": "Qdrant Is a Storage Engine",
+    "date": "2026-11-16",
+    "url": "blogs/qdrant-is-a-storage-engine.html",
+    "excerpt": "Qdrant accepts anything you send by design. Power users who set the schema first get faster searches and filters that return what they expect.",
+    "image": "images/tiny/qdrant-is-a-storage-engine.jpg",
+    "imageAlt": "Diagram of the recipes collection: three segments of vectors, a write-ahead log, and a payload schema where indexed fields are green and undeclared fields are grey."
+  },
+  {
+    "title": "What Gets Installed, and Why",
+    "date": "2026-11-16",
+    "url": "blogs/mac-setup-tools.html",
+    "excerpt": "A tour of the roughly 57 tools in my mac-setup repo: what each group is for, and why each one earned a place on the list.",
+    "image": "images/tiny/mac-setup-tools.jpg",
+    "imageAlt": "Illustrated grid of the tools in the mac-setup repo, grouped into containers and Kubernetes, cloud, languages, shell, AI, and apps."
   }
 ]
